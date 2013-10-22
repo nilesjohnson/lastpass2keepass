@@ -76,15 +76,9 @@ for x in reader:
 
 w.close() # reader appears to be lazily evaluated leave - close w here
 
-w = open(outputFile, "w") # clean the file - prepare for xml tree write
-
 allEntries.pop(0) # Remove LP format string.
 
 # Keepass XML generator
-   
-# Add doctype to head, clear file.
-
-w.write("<!DOCTYPE KEEPASSX_DATABASE>")
 
 # Generate Creation date
 # Form current time expression.
@@ -149,10 +143,12 @@ for categoryEntries in sorted_resultant:
 
 # Write out tree
 # wrap it in an ElementTree instance, and save as XML
+doc = ET.ElementTree(page)
 
-doc.write(w)
-
-w.close()
+with open(outputFile, "w") as w:  # clean the file - prepare for xml tree write
+    # Add doctype to head, clear file.
+    w.write("<!DOCTYPE KEEPASSX_DATABASE>")
+    doc.write(w)
 
 print lineBreak
 print "\n'%s' has been succesfully converted to the KeePassXML format." %(inputFile)
