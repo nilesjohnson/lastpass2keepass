@@ -91,7 +91,6 @@ formattedNow = now.strftime("%Y-%m-%dT%H:%M")
 # build a tree structure
 
 page = ET.Element('database')
-doc = ET.ElementTree(page)
 
 # A dictionary, organising the categories.
 
@@ -102,24 +101,38 @@ resultant = {}
 for entry in allEntries:
     resultant.setdefault( entry[5], [] ).append( entry )
 
-sorted_resultant = sorted(resultant.iteritems(), key=operator.itemgetter(1)) # sort for xml tree
+# Search a list of elements for a title child
+def findone_by_title(element_list, title):
+    for e in element_list:
+        if e.find("title").text == title:
+            return e
 
-# Sort by categories.
+# Iterate over the results dictionary, but fixup the tree on the way.
+# We want the group Foo\Bar to be a descendent of Foo named Bar.
+def tree_build_iter(page, results):
+    for (category, entries) in sorted(results.iteritems()):
+        category = str(category).decode("utf-8")
+        parts = category.split("\\")
+        loc = page
+        for p in parts:
+            # Find a pre-existing group if possible
+            newloc = None
+            for e in loc.findall("group"):
+                if e.find("title").text == p:
+                    newloc = e
+                    break
+            # Group not found, create it
+            if newloc is None:
+                newloc = ET.SubElement(loc, "group")
+                ET.SubElement(newloc, "title").text = p
+                ET.SubElement(newloc, "icon").text = "0"
+
+            loc = newloc
+            yield (loc, sorted(entries, key=operator.itemgetter(4)))
 
 # Initilize and loop through all entries
 
-for categoryEntries in sorted_resultant:
-
-    # Place hold sorted data
-
-    category = categoryEntries[0]
-    entries = categoryEntries[1]
-
-    # Create head of group elements
-
-    headElement = ET.SubElement(page, "group")
-    ET.SubElement(headElement, "title").text = str(category).decode("utf-8")
-    ET.SubElement(headElement, "icon").text = "0" # Lastpass does not retain icons.
+for headElement, entries in tree_build_iter(page, resultant):
 
     for entry in entries:
 
