@@ -1,3 +1,4 @@
+# vim:ts=4:expandtab:sw=4
 # lastpass2keepass
 # Supports:
 # Keepass XML - keepassxml
@@ -17,7 +18,7 @@ def formattedPrint(string):
     print lineBreak
     print string
     print lineBreak
-       
+
 # Files
 # Check for existence/read/write.
 
@@ -26,13 +27,13 @@ try:
 except:
     formattedPrint("USAGE: python lastpass2keepass.py exportedTextFile")
     sys.exit()
-    
+
 try:
-	f = open(inputFile)
+    f = open(inputFile)
 except IOError:
-	formattedPrint("Cannot read file: '%s' Error: '%s'" % (inputFile, fileError) )
-	sys.exit()
-	
+    formattedPrint("Cannot read file: '%s' Error: '%s'" % (inputFile, fileError) )
+    sys.exit()
+
 # Create XML file.
 outputFile = inputFile + ".export.xml"
 
@@ -51,12 +52,12 @@ q = re.compile(',\d\n')
 
 for line in f.readlines():
 
-	if h.match( line ):
-		w.write( "\n" + line.strip() ) # Each new line is based on this
-	elif q.search( line ):
-		w.write( line.strip() ) # Remove end line
-	else:
-		w.write( line.replace( '\n', '|\t|' ) ) # Place holder for new lines in extra stuff
+    if h.match( line ):
+        w.write( "\n" + line.strip() ) # Each new line is based on this
+    elif q.search( line ):
+        w.write( line.strip() ) # Remove end line
+    else:
+        w.write( line.replace( '\n', '|\t|' ) ) # Place holder for new lines in extra stuff
 
 f.close() # Close the read file.
 
@@ -72,7 +73,7 @@ reader = csv.reader( w, delimiter=',', quotechar='"' ) # use quotechar to fix pa
 allEntries = []
 
 for x in reader:
-	allEntries.append(x)
+    allEntries.append(x)
 
 w.close() # reader appears to be lazily evaluated leave - close w here
 
@@ -91,45 +92,45 @@ formattedNow = now.strftime("%Y-%m-%dT%H:%M")
 
 page = ET.Element('database')
 doc = ET.ElementTree(page)
-  
+
 # A dictionary, organising the categories.
 
 resultant = {}
-    
+
 # Parses allEntries into a resultant dict.
 
 for entry in allEntries:
-	resultant.setdefault( entry[5], [] ).append( entry ) 
+    resultant.setdefault( entry[5], [] ).append( entry )
 
 sorted_resultant = sorted(resultant.iteritems(), key=operator.itemgetter(1)) # sort for xml tree
 
-# Sort by categories.	
+# Sort by categories.
 
 # Initilize and loop through all entries
 
 for categoryEntries in sorted_resultant:
 
-	# Place hold sorted data
-	
+    # Place hold sorted data
+
     category = categoryEntries[0]
     entries = categoryEntries[1]
-	
-	# Create head of group elements
-	
+
+    # Create head of group elements
+
     headElement = ET.SubElement(page, "group")
     ET.SubElement(headElement, "title").text = str(category).decode("utf-8")
     ET.SubElement(headElement, "icon").text = "0" # Lastpass does not retain icons.
-    
-    for entry in entries: 
-	
+
+    for entry in entries:
+
     # entryElement information
 
             # Each entryElement
-			
+
             entryElement = ET.SubElement(headElement, "entry")
-			
+
             # entryElement tree
-			
+
             ET.SubElement(entryElement, 'title').text = str(entry[4]).decode("utf-8") # Use decode for windows el appending errors
             ET.SubElement(entryElement, 'username').text = str(entry[1]).decode("utf-8")
             ET.SubElement(entryElement, 'password').text = str(entry[2]).decode("utf-8")
