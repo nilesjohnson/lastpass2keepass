@@ -1,13 +1,17 @@
+#!/usr/bin/python
 # vim:ts=4:expandtab:sw=4
 # lastpass2keepass
 # Supports:
 # Keepass XML - keepassxml
 # USAGE: python lastpass2keepass.py exportedTextFile
-# The LastPass Export format;
-# url,username,password,1extra,name,grouping(\ delimited),last_touch,launch_count,fav
+
+
 
 import sys, csv, time, datetime, itertools, re, operator # Toolkit
 import xml.etree.ElementTree as ET # Saves data, easier to type
+
+# Keepass icons: 0 = key, 61 = star
+icon = ["0","61"]
 
 # Strings
 
@@ -149,9 +153,9 @@ for headElement, entries in tree_build_iter(page, resultant):
             ET.SubElement(entryElement, 'password').text = str(entry[2]).decode("utf-8")
             ET.SubElement(entryElement, 'url').text = str(entry[0]).decode("utf-8")
             ET.SubElement(entryElement, 'comment').text = str(entry[3]).replace( '|\t|', '\n').strip('"').decode("utf-8") # fix place holder
-            ET.SubElement(entryElement, 'icon').text = "0"
+            ET.SubElement(entryElement, 'icon').text = icon[int(entry[6])]
             ET.SubElement(entryElement, 'creation').text = formattedNow
-            ET.SubElement(entryElement, 'lastaccess').text = str(entry[5]).decode("utf-8")
+            ET.SubElement(entryElement, 'lastaccess').text = formattedNow
             ET.SubElement(entryElement, 'lastmod').text = formattedNow
             ET.SubElement(entryElement, 'expire').text = "Never"
 

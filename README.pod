@@ -29,7 +29,7 @@ Then import the "exportedTextFile.export.xml" into KeePassx via:
 =head2 TESTS/DEMO
 
 	python test_generator.py
-	python lastpass2keepass.py test_passwords.txt
+	python lastpass2keepass.py test_passwords.csv
 
 Then import the "test_passwords.txt.export.xml" into KeePassx via:
 
@@ -38,6 +38,14 @@ Then import the "test_passwords.txt.export.xml" into KeePassx via:
 =head2 UTF-8
 
 This is UTF-8 compliant on *nix systems, with Python 2.6.
+
+=head2 CHANGES
+
+2014-02-20: LastPass output format has changed to the following:
+
+        url,username,password,extra,name,grouping(\ delimited),fav
+
+
 
 =head1 ACKNOWLEDGEMENTS
 
