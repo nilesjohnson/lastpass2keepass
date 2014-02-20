@@ -1,3 +1,4 @@
+# vim:ts=4:expandtab:sw=4
 # lastpass2keepass
 # Supports:
 # Keepass XML - keepassxml
@@ -17,7 +18,7 @@ def formattedPrint(string):
     print lineBreak
     print string
     print lineBreak
-       
+
 # Files
 # Check for existence/read/write.
 
@@ -26,13 +27,13 @@ try:
 except:
     formattedPrint("USAGE: python lastpass2keepass.py exportedTextFile")
     sys.exit()
-    
+
 try:
-	f = open(inputFile)
+    f = open(inputFile)
 except IOError:
-	formattedPrint("Cannot read file: '%s' Error: '%s'" % (inputFile, fileError) )
-	sys.exit()
-	
+    formattedPrint("Cannot read file: '%s' Error: '%s'" % (inputFile, fileError) )
+    sys.exit()
+
 # Create XML file.
 outputFile = inputFile + ".export.xml"
 
@@ -51,12 +52,12 @@ q = re.compile(',\d\n')
 
 for line in f.readlines():
 
-	if h.match( line ):
-		w.write( "\n" + line.strip() ) # Each new line is based on this
-	elif q.search( line ):
-		w.write( line.strip() ) # Remove end line
-	else:
-		w.write( line.replace( '\n', '|\t|' ) ) # Place holder for new lines in extra stuff
+    if h.match( line ):
+        w.write( "\n" + line.strip() ) # Each new line is based on this
+    elif q.search( line ):
+        w.write( line.strip() ) # Remove end line
+    else:
+        w.write( line.replace( '\n', '|\t|' ) ) # Place holder for new lines in extra stuff
 
 f.close() # Close the read file.
 
@@ -72,19 +73,13 @@ reader = csv.reader( w, delimiter=',', quotechar='"' ) # use quotechar to fix pa
 allEntries = []
 
 for x in reader:
-	allEntries.append(x)
+    allEntries.append(x)
 
 w.close() # reader appears to be lazily evaluated leave - close w here
-
-w = open(outputFile, "w") # clean the file - prepare for xml tree write
 
 allEntries.pop(0) # Remove LP format string.
 
 # Keepass XML generator
-   
-# Add doctype to head, clear file.
-
-w.write("<!DOCTYPE KEEPASSX_DATABASE>")
 
 # Generate Creation date
 # Form current time expression.
@@ -96,46 +91,59 @@ formattedNow = now.strftime("%Y-%m-%dT%H:%M")
 # build a tree structure
 
 page = ET.Element('database')
-doc = ET.ElementTree(page)
-  
+
 # A dictionary, organising the categories.
 
 resultant = {}
-    
+
 # Parses allEntries into a resultant dict.
 
 for entry in allEntries:
-	resultant.setdefault( entry[5], [] ).append( entry ) 
+    resultant.setdefault( entry[5], [] ).append( entry )
 
-sorted_resultant = sorted(resultant.iteritems(), key=operator.itemgetter(1)) # sort for xml tree
+# Search a list of elements for a title child
+def findone_by_title(element_list, title):
+    for e in element_list:
+        if e.find("title").text == title:
+            return e
 
-# Sort by categories.	
+# Iterate over the results dictionary, but fixup the tree on the way.
+# We want the group Foo\Bar to be a descendent of Foo named Bar.
+def tree_build_iter(page, results):
+    for (category, entries) in sorted(results.iteritems()):
+        category = str(category).decode("utf-8")
+        parts = category.split("\\")
+        loc = page
+        for p in parts:
+            # Find a pre-existing group if possible
+            newloc = None
+            for e in loc.findall("group"):
+                if e.find("title").text == p:
+                    newloc = e
+                    break
+            # Group not found, create it
+            if newloc is None:
+                newloc = ET.SubElement(loc, "group")
+                ET.SubElement(newloc, "title").text = p
+                ET.SubElement(newloc, "icon").text = "0"
+
+            loc = newloc
+            yield (loc, sorted(entries, key=operator.itemgetter(4)))
 
 # Initilize and loop through all entries
 
-for categoryEntries in sorted_resultant:
+for headElement, entries in tree_build_iter(page, resultant):
 
-	# Place hold sorted data
-	
-    category = categoryEntries[0]
-    entries = categoryEntries[1]
-	
-	# Create head of group elements
-	
-    headElement = ET.SubElement(page, "group")
-    ET.SubElement(headElement, "title").text = str(category).decode("utf-8")
-    ET.SubElement(headElement, "icon").text = "0" # Lastpass does not retain icons.
-    
-    for entry in entries: 
-	
+    for entry in entries:
+
     # entryElement information
 
             # Each entryElement
-			
+
             entryElement = ET.SubElement(headElement, "entry")
-			
+
             # entryElement tree
-			
+
             ET.SubElement(entryElement, 'title').text = str(entry[4]).decode("utf-8") # Use decode for windows el appending errors
             ET.SubElement(entryElement, 'username').text = str(entry[1]).decode("utf-8")
             ET.SubElement(entryElement, 'password').text = str(entry[2]).decode("utf-8")
@@ -149,10 +157,12 @@ for categoryEntries in sorted_resultant:
 
 # Write out tree
 # wrap it in an ElementTree instance, and save as XML
+doc = ET.ElementTree(page)
 
-doc.write(w)
-
-w.close()
+with open(outputFile, "w") as w:  # clean the file - prepare for xml tree write
+    # Add doctype to head, clear file.
+    w.write("<!DOCTYPE KEEPASSX_DATABASE>")
+    doc.write(w)
 
 print lineBreak
 print "\n'%s' has been succesfully converted to the KeePassXML format." %(inputFile)
