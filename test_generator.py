@@ -14,23 +14,19 @@ unicode_glyphs = ''.join(
     if unicodedata.category(unichr(char))[0] in ('LMNPSZ')
     )
 
-ascii_glyphs = string.ascii_uppercase + string.ascii_lowercase + string.digits
-
-glyphs = ascii_glyphs
-
 # Generator
 
 for i in range(1, 250):
 
-    url = "http://www." + "".join( [random.choice(glyphs).encode('utf-8') for i in xrange(4)]) + ".com"
-    username = "username_" + "".join( [random.choice(glyphs).encode('utf-8') for i in xrange(4)] )
-    password = "password_" + "".join( [random.choice(glyphs).encode('utf-8') for i in xrange(15)] )
-    extra = "extra_" + "".join( [random.choice(glyphs).encode('utf-8') for i in xrange(4)] )
-    name = "WEBSITE_NAME_" + "".join( [random.choice(glyphs).encode('utf-8') for i in xrange(4)] )
+    url = "http://www." + "".join( [random.choice(unicode_glyphs).encode('utf-8') for i in xrange(4)]) + ".com"
+    username = "username_" + "".join( [random.choice(unicode_glyphs).encode('utf-8') for i in xrange(4)] )
+    password = "password_" + "".join( [random.choice(unicode_glyphs).encode('utf-8') for i in xrange(15)] )
+    extra = "extra_" + "".join( [random.choice(unicode_glyphs).encode('utf-8') for i in xrange(4)] )
+    name = "WEBSITE_NAME_" + "".join( [random.choice(unicode_glyphs).encode('utf-8') for i in xrange(4)] )
     grouping = "All\Main"
     last_touch = formattedNow
     launch_count = str(i)
-    fav = "".join( [random.choice(glyphs).encode('utf-8') for i in xrange(1)] )
+    fav = "".join( [random.choice(unicode_glyphs).encode('utf-8') for i in xrange(1)] )
 
     entry = [url, username, password, extra, name, grouping, last_touch, launch_count, fav]
 
