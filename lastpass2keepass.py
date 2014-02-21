@@ -42,6 +42,8 @@ kp_icon = ["0","61"]
 newline_placeholder = "|\t|"
 
 
+
+
 DEBUG_LEVEL = 0  # 0 for no debug, positive for debug messages
 def debug(msg):
     if DEBUG_LEVEL > 0:
@@ -131,6 +133,17 @@ def formattedPrint(*strings):
 # Files
 # Check for existence/read/write.
 
+
+# generate test file if requested
+if sys.argv[1] in ['--test','-test','-t','--generate','-generate','-g']:
+    test_file = 'test_passwords.csv'
+    formattedPrint("Generating test file",test_file)
+    from test_generator import TestGenerator
+    test_generator = TestGenerator(lp_format)
+    test_generator.generate(test_file)
+    sys.exit()
+
+
 try:
     inputFile = sys.argv[1]
 except:
@@ -158,22 +171,27 @@ except IOError:
 # Parser
 # Parse w/ delimter being comma, and entries separted by newlines
 
-h = re.compile('^http') # Fix multi-line lastpass problems
+## Fix problems with linebreaks in LP comments
+h = re.compile('^http') 
 q = re.compile(',\d\n')
 
 for line in f.readlines():
-
     if h.match( line ):
+        # we're at the beginning of a new entry
+        # (starts with "http://")
+        # make a new line
         w.write( "\n" + line.strip() ) # Each new line is based on this
     elif q.search( line ):
+        # we're at the end of an entry (comma, then digit, then newline)
         w.write( line.strip() ) # Remove end line
     else:
-        w.write( line.replace( '\n', newline_placeholder ) ) # Place holder for new lines in extra stuff
+        # we're in the middle of an entry; replace newline with placeholder
+        w.write( line.replace( '\n', newline_placeholder ) )
 
 f.close() # Close the read file.
+w.close() # Done fixing linebreaks
 
-w.close() # reuse same file - stringIO isn't working
-
+# reuse same file - stringIO isn't working
 w = open(outputFile, "r") # open for reading - windows problems with reader on stringIO
 
 reader = csv.reader( w, delimiter=',', quotechar='"' ) # use quotechar to fix parsing
