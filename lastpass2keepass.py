@@ -6,21 +6,126 @@
 # USAGE: python lastpass2keepass.py exportedTextFile
 
 
-
 import sys, csv, time, datetime, itertools, re, operator # Toolkit
 import xml.etree.ElementTree as ET # Saves data, easier to type
 
-# Keepass icons: 0 = key, 61 = star
-icon = ["0","61"]
+# format of LP export csv (first line of export file)
+lp_format = "url,username,password,extra,name,grouping,fav"
+
+# translate LP field names (values) to KP field names (keys)
+lp2kp_translator = dict({
+    'title':'name',
+    'username':'username',
+    'password':'password',
+    'url':'url',
+    'comment':'extra',
+    'icon':'fav',
+    })
+
+# Generate default creation/access/mod date
+# from current time expression.
+now = datetime.datetime.now()
+formattedNow = now.strftime("%Y-%m-%dT%H:%M")
+
+# give default values to extra KP field names
+kp_extras = dict({
+    'creation':formattedNow,
+    'lastaccess':formattedNow,
+    'lastmod':formattedNow,
+    'expire':'Never',
+})
+
+# KP icons: 0 = key, 61 = star
+kp_icon = ["0","61"]
+
+# placeholder for newline in LP comments
+newline_placeholder = "|\t|"
+
+
+DEBUG_LEVEL = 0  # 0 for no debug, positive for debug messages
+def debug(msg):
+    if DEBUG_LEVEL > 0:
+        print(msg)
+
+
+
+# converter from lp format to kp format:
+class Converter:
+    """
+    Takes an arbitrary comma-separated lp_format
+    and builds an object for converting from that format
+    to KeePass format.
+
+    INPUTS:
+
+        - lp_format_string: get the index of each field in the export file
+        - lp2kp_translator_dict: match exported fields with KP fields
+        - kp_extras_dict: set default values of extra KP fields
+        - kp_icon_list: icons for default and "favorite" entries
+    """
+    def __init__(self,
+                 lp_format_string,
+                 lp2kp_translator_dict,
+                 kp_extras_dict,
+                 kp_icon_list):
+        self.export_index = dict(zip(lp_format_string.split(','),range(len(lp_format_string))))
+        self.translator = lp2kp_translator_dict
+        debug("LP export index: "+str(self.export_index))
+        debug("LP to KP translator: "+str(self.translator))
+        self.extras = kp_extras_dict
+        self.icon = kp_icon_list
+
+    def kp_format(self,entry):
+        """
+        Takes an exported entry, returns dict for KeePass entry
+
+        TESTS::
+        
+            lp2kp_converter = Converter(lp_format,lp2kp_translator,kp_extras,kp_icon)
+            test_entry = ['http://url', 'myusername', 'mypassword', 'myextra', 'myname', 'mygrouping', '0']
+            lp2kp_converter.kp_format(test_entry)
+        """
+        d = self.extras.copy()
+        for kp_name, lp_name in self.translator.iteritems():
+            idx = self.export_index[lp_name]
+
+            # get icon; convert other fields to string
+            if kp_name == 'icon':
+                entry_text = self.icon[int(entry[idx])]
+            else:
+                entry_text = str(entry[idx])
+
+            # replace newline placeholder with newline in comment
+            # and strip quotes
+            if kp_name == "comment":
+                entry_text = entry_text.replace(newline_placeholder, '\n').strip('"')
+
+            # decode UTF
+            # Use decode for windows el appending errors
+            d[kp_name] = entry_text.decode("utf-8")
+        return d
+
+# create converter instance using format and translator from top of this file
+lp2kp_converter = Converter(lp_format,lp2kp_translator,kp_extras,kp_icon)
+
+# test the converter
+if DEBUG_LEVEL > 0:
+    test_entry = ['http://url', 'myusername', 'mypassword', 'myextra', 'myname', 'mygrouping', '0']
+    d = lp2kp_converter.kp_format(test_entry)
+    debug(d)
+
+
+
 
 # Strings
 
 fileError = "You either need more permissions or the file does not exist."
-lineBreak = "____________________________________________________________\n"
+lineBreak = "_"*len(fileError) + "\n"
 
-def formattedPrint(string):
+def formattedPrint(*strings):
     print lineBreak
-    print string
+    for string in strings:
+        print string
     print lineBreak
 
 # Files
@@ -29,13 +134,14 @@ def formattedPrint(string):
 try:
     inputFile = sys.argv[1]
 except:
-    formattedPrint("USAGE: python lastpass2keepass.py exportedTextFile")
+    formattedPrint("USAGE: python lastpass2keepass.py passwords.csv")
     sys.exit()
 
 try:
     f = open(inputFile)
 except IOError:
-    formattedPrint("Cannot read file: '%s' Error: '%s'" % (inputFile, fileError) )
+    formattedPrint("Cannot read file: '{0}'".format(inputFile),
+                   "Error: {0}".format(fileError))
     sys.exit()
 
 # Create XML file.
@@ -45,7 +151,8 @@ try:
     open(outputFile, "w").close() # Clean.
     w = open(outputFile, "a")
 except IOError:
-    formattedPrint("Cannot write to disk... exiting. Error: '%s'" % (fileError) )
+    formattedPrint("Cannot write to disk... exiting.",
+                   "Error: {0}".format(fileError) )
     sys.exit()
 
 # Parser
@@ -61,7 +168,7 @@ for line in f.readlines():
     elif q.search( line ):
         w.write( line.strip() ) # Remove end line
     else:
-        w.write( line.replace( '\n', '|\t|' ) ) # Place holder for new lines in extra stuff
+        w.write( line.replace( '\n', newline_placeholder ) ) # Place holder for new lines in extra stuff
 
 f.close() # Close the read file.
 
@@ -81,15 +188,20 @@ for x in reader:
 
 w.close() # reader appears to be lazily evaluated leave - close w here
 
+# check that LP format string has expected structure
+if allEntries[0] != (lp_format+newline_placeholder).split(','):
+    formattedPrint("Unexpected format for export file",
+                   "Expected: {0}".format((lp_format+newline_placeholder).split(',')),
+                   "Got: {0}".format(allEntries[0])
+                   )
+    sys.exit()
 allEntries.pop(0) # Remove LP format string.
+
+
+
 
 # Keepass XML generator
 
-# Generate Creation date
-# Form current time expression.
-
-now = datetime.datetime.now()
-formattedNow = now.strftime("%Y-%m-%dT%H:%M")
 
 # Initialize tree
 # build a tree structure
@@ -134,6 +246,10 @@ def tree_build_iter(page, results):
             loc = newloc
             yield (loc, sorted(entries, key=operator.itemgetter(4)))
 
+
+
+
+
 # Initilize and loop through all entries
 
 for headElement, entries in tree_build_iter(page, resultant):
@@ -148,16 +264,9 @@ for headElement, entries in tree_build_iter(page, resultant):
 
             # entryElement tree
 
-            ET.SubElement(entryElement, 'title').text = str(entry[4]).decode("utf-8") # Use decode for windows el appending errors
-            ET.SubElement(entryElement, 'username').text = str(entry[1]).decode("utf-8")
-            ET.SubElement(entryElement, 'password').text = str(entry[2]).decode("utf-8")
-            ET.SubElement(entryElement, 'url').text = str(entry[0]).decode("utf-8")
-            ET.SubElement(entryElement, 'comment').text = str(entry[3]).replace( '|\t|', '\n').strip('"').decode("utf-8") # fix place holder
-            ET.SubElement(entryElement, 'icon').text = icon[int(entry[6])]
-            ET.SubElement(entryElement, 'creation').text = formattedNow
-            ET.SubElement(entryElement, 'lastaccess').text = formattedNow
-            ET.SubElement(entryElement, 'lastmod').text = formattedNow
-            ET.SubElement(entryElement, 'expire').text = "Never"
+            converter_dict = lp2kp_converter.kp_format(entry)            
+            for entry_key,entry_value in converter_dict.iteritems():
+                    ET.SubElement(entryElement, entry_key).text = entry_value
 
 # Write out tree
 # wrap it in an ElementTree instance, and save as XML
