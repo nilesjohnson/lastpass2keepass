@@ -4,6 +4,7 @@
 # Supports:
 # Keepass XML - keepassxml
 # USAGE: python lastpass2keepass.py exportedTextFile
+# TEST/DEMO: python lastpass2keepass.py --test
 
 
 import sys, csv, time, datetime, itertools, re, operator # Toolkit
@@ -134,7 +135,7 @@ def formattedPrint(*strings):
 # Check for existence/read/write.
 
 
-# generate test file if requested
+## generate test file if requested
 if sys.argv[1] in ['--test','-test','-t','--generate','-generate','-g']:
     test_file = 'test_passwords.csv'
     formattedPrint("Generating test file",test_file)
@@ -143,6 +144,7 @@ if sys.argv[1] in ['--test','-test','-t','--generate','-generate','-g']:
     test_generator.generate(test_file)
     sys.exit()
 
+## otherwise, try to open file for conversion
 
 try:
     inputFile = sys.argv[1]

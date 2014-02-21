@@ -2,16 +2,19 @@
 """
 As of 2014-02-20: CSV from LastPass has the format
 
-url,username,password,extra,name,grouping(\ delimited),fav
+    url,username,password,extra,name,grouping(\ delimited),fav
 
 Previous formats may have been
 
-url,username,password,1extra,name,grouping(\ delimited),last_touch,launch_count,fav
+    url,username,password,1extra,name,grouping(\ delimited),last_touch,launch_count,fav
+
+
+This file defines a TestGenerator class which can be imported
+and called from the main script.  This makes usage a little simpler
+(only one script to run instead of two), and allows us to have just
+*one* lp_format string for the whole project.
 """
 import random, datetime, unicodedata, string
-
-lp_format = "url,username,password,extra,name,grouping,fav"
-
 
 class TestGenerator:
     """
@@ -42,7 +45,7 @@ class TestGenerator:
         appendToFile = open(outfile, "a" )
 
         # Generator
-        appendToFile.write(lp_format+"\n")
+        appendToFile.write(self.format+"\n")
 
         for i in range(1, num_entries):
             entry = []
