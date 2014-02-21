@@ -10,7 +10,7 @@ url,username,password,1extra,name,grouping(\ delimited),last_touch,launch_count,
 """
 import random, datetime, unicodedata, string
 
-
+lp_format = "url,username,password,extra,name,grouping,fav"
 now = datetime.datetime.now()
 formattedNow = now.strftime("%Y-%m-%dT%H:%M")
 
@@ -31,6 +31,8 @@ subgroups = ["Subgroup "+str(i)+random_unicode(4) for i in range(5)]
 
 
 # Generator
+
+appendToFile.write(lp_format+"\n")
 
 for i in range(1, 250):
 
