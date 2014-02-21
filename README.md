@@ -26,9 +26,11 @@ TESTS/DEMO
 -
 
 Generate a test file with:
+
     python lastpass2keepass.py --test
 
 Then process it as usual:
+
     python lastpass2keepass.py test_passwords.csv
 
 Then import the `test_passwords.csv.export.xml` into KeePassx via:
