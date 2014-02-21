@@ -28,7 +28,7 @@ TESTS/DEMO
     python test_generator.py
     python lastpass2keepass.py test_passwords.csv
 
-Then import the "test_passwords.txt.export.xml" into KeePassx via:
+Then import the `test_passwords.csv.export.xml` into KeePassx via:
 
     File --> Import from... --> KeePassX XML (*.xml)
 
@@ -43,7 +43,8 @@ CHANGES
 2014-02-20 
 ----------
 
-* LastPass output format has changed to the following:
+LastPass output format has changed to the following:
+
     url,username,password,extra,name,grouping(\ delimited),fav
 
 
