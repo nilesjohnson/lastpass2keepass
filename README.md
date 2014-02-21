@@ -42,18 +42,19 @@ UTF-8
 
 This is UTF-8 compliant on *nix systems, with Python 2.6.
 
-CHANGES
+
+EXPORT FORMAT
 =
 
-2014-02-20 
+Feb. 2014
 -
 
-LastPass output format has changed to the following, with groups and subgroups delimited by \ (backslash):
+LastPass output format is as follows, with groups and subgroups delimited by \ (backslash):
 
     url,username,password,extra,name,grouping,fav
 
-The conversion script now prints an error if the delimiter structure changes.
-
+Lastpass prints the export format on the top line of the exported file.  The conversion script checks
+this and prints an error if it differes from the line above.
 
 
 ACKNOWLEDGEMENTS
