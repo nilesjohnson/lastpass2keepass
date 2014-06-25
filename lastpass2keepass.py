@@ -136,31 +136,32 @@ def formattedPrint(*strings):
 
 
 ## generate test file if requested
-if sys.argv[1] in ['--test','-test','-t','--generate','-generate','-g']:
-    test_file = 'test_passwords.csv'
-    formattedPrint("Generating test file",test_file)
-    from test_generator import TestGenerator
-    test_generator = TestGenerator(lp_format)
-    test_generator.generate(test_file)
-    sys.exit()
-
-## otherwise, try to open file for conversion
-
 try:
-    inputFile = sys.argv[1]
-except:
-    formattedPrint("USAGE: python lastpass2keepass.py passwords.csv")
-    sys.exit()
+    if sys.argv[1] in ['--test','-test','-t','--generate','-generate','-g']:
+        test_file = 'test_passwords.csv'
+        formattedPrint("Generating test file",test_file)
+        from test_generator import TestGenerator
+        test_generator = TestGenerator(lp_format)
+        test_generator.generate(test_file)
+        sys.exit()
 
-try:
-    f = open(inputFile)
-except IOError:
-    formattedPrint("Cannot read file: '{0}'".format(inputFile),
-                   "Error: {0}".format(fileError))
-    sys.exit()
+    ## otherwise, try to open file for conversion
+    else:
+        try:
+            inputFile = sys.argv[1]
+            outputFile = inputFile + ".export.xml"
+            f = open(inputFile)
+        except IOError:
+            formattedPrint("Cannot read input file","Error: {0}".format(fileError))
+            sys.exit()
+except IndexError:
+    formattedPrint("Reading from stdin","Paste lastpass export content below","Press Ctrl-D to finish")
+    f = sys.stdin
+    import random
+    suffix = ''.join((random.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ') for _ in range(5)))
+    outputFile = "lastpass-export-{0}.xml".format(suffix)
 
-# Create XML file.
-outputFile = inputFile + ".export.xml"
+    
 
 try:
     open(outputFile, "w").close() # Clean.
@@ -297,7 +298,6 @@ with open(outputFile, "w") as w:  # clean the file - prepare for xml tree write
     w.write("<!DOCTYPE KEEPASSX_DATABASE>")
     doc.write(w)
 
-print lineBreak
-print "\n'%s' has been succesfully converted to the KeePassXML format." %(inputFile)
-print "Converted data can be found in the '%s' file.\n" %(outputFile)
-print lineBreak
+
+formattedPrint("Input has been succesfully converted to the KeePassXML format.",
+    "Converted data can be found in file '{0}'.\n".format(outputFile))
